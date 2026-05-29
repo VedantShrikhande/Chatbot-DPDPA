@@ -1,5 +1,5 @@
 import streamlit as st
-import anthropic
+import google.generativeai as genai
 
 st.set_page_config(
     page_title="DPDPA Guide — India Data Protection Act",
