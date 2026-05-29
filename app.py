@@ -283,7 +283,7 @@ if question:
     with st.spinner("🛡️ DPDPA Guide is thinking..."):
         try:
             import google.generativeai as genai
-            genai.configure(api_key=st.secrets[AQ.Ab8RN6LurHNAm8ZBZ0C4hWg-pUpGMXWAg-Pma_9WIOSCy8ZcXQ])
+            genai.configure(api_key=st.secrets["AQ.Ab8RN6LurHNAm8ZBZ0C4hWg-pUpGMXWAg-Pma_9WIOSCy8ZcXQ"])
             model = genai.GenerativeModel(
                 model_name="gemini-1.5-flash",
                 system_instruction=SYSTEM_PROMPT
