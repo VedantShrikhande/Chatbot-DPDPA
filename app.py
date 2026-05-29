@@ -280,19 +280,25 @@ elif send and user_input and user_input.strip():
 
 if question:
     st.session_state.messages.append({"role": "user", "content": question})
-    api_msgs = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
     with st.spinner("🛡️ DPDPA Guide is thinking..."):
         try:
-            client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
-            resp = client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=1200,
-                system=SYSTEM_PROMPT,
-                messages=api_msgs,
+            import google.generativeai as genai
+            genai.configure(api_key=st.secrets["AQ.Ab8RN6LurHNAm8ZBZ0C4hWg-pUpGMXWAg-Pma_9WIOSCy8ZcXQ"])
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-flash",
+                system_instruction=SYSTEM_PROMPT
             )
-            answer = resp.content[0].text
+            history_gemini = []
+            for m in st.session_state.messages[:-1]:
+                history_gemini.append({
+                    "role": "user" if m["role"] == "user" else "model",
+                    "parts": [m["content"]]
+                })
+            chat = model.start_chat(history=history_gemini)
+            response = chat.send_message(question)
+            answer = response.text
         except Exception as e:
-            answer = f"⚠️ Error: {str(e)}\n\nPlease check your API key in `.streamlit/secrets.toml`."
+            answer = f"⚠️ Error: {str(e)}"
     st.session_state.messages.append({"role": "assistant", "content": answer})
     st.session_state.input_key += 1
     st.rerun()
