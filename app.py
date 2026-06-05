@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from groq import Groq
 
 st.set_page_config(
     page_title="DPDPA Guide — India Data Protection Act",
@@ -113,50 +113,33 @@ CHAPTER 2 (Sec 4-10) FIDUCIARY OBLIGATIONS:
 - Sec 6: CONSENT must be Free, Specific, Informed, Unconditional, Unambiguous (FSIUU). Affirmative action only. Withdrawal as easy as giving. Can use Consent Manager.
 - Sec 7: LEGITIMATE USES (no consent needed): voluntary data for specific purpose; State services/subsidies/benefits; legal obligations/court orders; employment; medical emergency/epidemic; disaster/public order; research/statistics in public interest.
 - Sec 8: GENERAL OBLIGATIONS: data accuracy; purpose limitation; erase when done; security safeguards; notify Board AND Data Principals of breach; grievance mechanism; Data Processor bound by contract.
-- Sec 9: CHILDREN (under 18): verifiable parental/guardian consent; NO behavioral monitoring; NO targeted advertising to children; NO harmful processing. Health/educational institutions may be exempted. Govt may lower age for specific platforms.
-- Sec 10: SIGNIFICANT DATA FIDUCIARY: appoint DPO; appoint independent data auditor; conduct DPIA (Data Protection Impact Assessment); periodic audit; cannot use children's data for tracking/targeting. SDF criteria: volume, sensitivity, risk to rights, sovereignty impact, democratic risk, State security.
+- Sec 9: CHILDREN (under 18): verifiable parental/guardian consent; NO behavioral monitoring; NO targeted advertising to children; NO harmful processing.
+- Sec 10: SIGNIFICANT DATA FIDUCIARY: appoint DPO; conduct DPIA; periodic audit; cannot use children's data for tracking/targeting.
 
 CHAPTER 3 (Sec 11-15) RIGHTS AND DUTIES:
 - Sec 11: RIGHT TO ACCESS — summary of data being processed; identities of all Fiduciaries and Processors.
 - Sec 12: RIGHT TO CORRECTION & ERASURE — correct inaccurate/incomplete data; erase data no longer needed.
 - Sec 13: RIGHT TO GRIEVANCE REDRESSAL — complain to Fiduciary first; escalate to Board if unresolved.
 - Sec 14: RIGHT TO NOMINATE — nominate someone to exercise rights on your behalf if you die or become incapacitated.
-- Sec 15: DUTIES OF DATA PRINCIPAL — comply with laws; no impersonation; no false complaints; provide authentic info. Penalty: up to Rs 10,000.
+- Sec 15: DUTIES OF DATA PRINCIPAL — comply with laws; no impersonation; no false complaints. Penalty: up to Rs 10,000.
 
 CHAPTER 4 (Sec 16-17) SPECIAL PROVISIONS:
-- Sec 16: CROSS-BORDER TRANSFERS — only to countries notified by Central Govt (whitelist). Govt may impose conditions.
-- Sec 17: EXEMPTIONS — national security; investigation of offences; research/archiving (with safeguards); personal use; small Data Fiduciaries may be exempt from Sec 5,11,12,13; Govt may exempt State instrumentalities.
+- Sec 16: CROSS-BORDER TRANSFERS — only to countries notified by Central Govt (whitelist).
+- Sec 17: EXEMPTIONS — national security; investigation of offences; research/archiving; personal use; small Data Fiduciaries may be exempt.
 
-CHAPTER 5 (Sec 18-26) DATA PROTECTION BOARD:
-Board established by Central Govt; fully digital office; Chairperson + up to 6 Members; expertise in data protection/IT/cybersecurity required; 3-year term or age 65; Members are public servants.
+CHAPTER 5-6: DATA PROTECTION BOARD — established by Central Govt; fully digital; Chairperson + 6 Members; investigates complaints; imposes penalties.
 
-CHAPTER 6 (Sec 27-28) BOARD POWERS:
-Investigates complaints; suo-motu inquiries; calls for information; imposes penalties; civil court powers (summon, examine, require documents); digital proceedings; natural justice principles.
+CHAPTER 7 (Sec 29-32) APPEALS: Appeal to TDSAT within 60 days. Voluntary undertaking possible.
 
-CHAPTER 7 (Sec 29-32) APPEALS & ADR:
-- Sec 29: Appeal to TDSAT within 60 days of Board order.
-- Sec 30: TDSAT orders executable as civil court decrees.
-- Sec 31: Mediation (voluntary).
-- Sec 32: Voluntary undertaking — company commits to fix breach; breach of undertaking reinstates original penalty.
+CHAPTER 8 (Sec 33-34) PENALTIES:
+- Security safeguards breach → UP TO Rs 250 CRORE
+- Failure to notify breach → UP TO Rs 200 CRORE
+- Children's data breach → UP TO Rs 200 CRORE
+- SDF obligations breach → UP TO Rs 150 CRORE
+- Data Principal duties breach → UP TO Rs 10,000
+- Any other breach → UP TO Rs 50 CRORE
 
-CHAPTER 8 (Sec 33-34) PENALTIES — THE SCHEDULE:
-- Breach of security safeguards (Sec 8(5)) → UP TO Rs 250 CRORE
-- Failure to notify data breach (Sec 8(6)) → UP TO Rs 200 CRORE
-- Children's data obligations breach (Sec 9) → UP TO Rs 200 CRORE
-- Significant Data Fiduciary breach (Sec 10) → UP TO Rs 150 CRORE
-- Data Principal duties breach (Sec 15) → UP TO Rs 10,000
-- Breach of voluntary undertaking (Sec 32) → original penalty reinstated
-- Any other provision breach → UP TO Rs 50 CRORE
-Board considers: gravity, duration, profit gained, remedial action, prior violations.
-Sec 34: All penalties go to Consolidated Fund of India.
-
-CHAPTER 9 (Sec 35-44) MISCELLANEOUS:
-- Sec 37: Central Govt can direct Data Fiduciaries for national security/sovereignty.
-- Sec 38: DPDPA prevails over inconsistent laws.
-- Sec 39: Civil courts cannot hear DPDPA matters — exclusive jurisdiction of Board/TDSAT.
-- Sec 44: IT Act 2000 amended — Sec 43A and 72A removed, replaced by DPDPA.
-
-KEY PRINCIPLES: lawful purpose, consent or legitimate use, purpose limitation, data minimization, storage limitation, security, accountability, children's protection, rights-based, digital-first enforcement.
+CHAPTER 9: DPDPA prevails over inconsistent laws. Civil courts cannot hear DPDPA matters. IT Act Sec 43A and 72A replaced by DPDPA.
 
 Remember: EVERY answer = Direct answer + Scenario + Example + Penalty (if applicable) + Key Takeaway. No exceptions."""
 
@@ -282,21 +265,16 @@ if question:
     st.session_state.messages.append({"role": "user", "content": question})
     with st.spinner("🛡️ DPDPA Guide is thinking..."):
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=st.secrets["AIzaSyD-Ab8RN6LurHNAm8ZBZ0C4hWg-pUpGMXWAg-Pma_9WIOSCy8ZcXQ"])
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
-                system_instruction=SYSTEM_PROMPT
+            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+            msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
+            msgs += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+            resp = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=msgs,
+                max_tokens=1200,
+                temperature=0.7,
             )
-            history_gemini = []
-            for m in st.session_state.messages[:-1]:
-                history_gemini.append({
-                    "role": "user" if m["role"] == "user" else "model",
-                    "parts": [m["content"]]
-                })
-            chat = model.start_chat(history=history_gemini)
-            response = chat.send_message(question)
-            answer = response.text
+            answer = resp.choices[0].message.content
         except Exception as e:
             answer = f"⚠️ Error: {str(e)}"
     st.session_state.messages.append({"role": "assistant", "content": answer})
